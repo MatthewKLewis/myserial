@@ -1,56 +1,45 @@
 #!/usr/bin/python
 import serial
 import time
-import json
-import signal
-import threading
-import subprocess
 import os
+import socket
 
-# def _sleep_handler(signum, frame):
-#     # print("SIGINT Received. Stopping CAF")
-#     raise KeyboardInterrupt
+debug = True
+HOST = "52.45.17.177"
+IQ_PORT = 24888
+DEBUG_PORT = 25888 
 
-# def _stop_handler(signum, frame):
-#     # print("SIGTERM Received. Stopping CAF")
-#     raise KeyboardInterrupt
+def debugPrint(msg):
+    if (debug and not tcpDebugClient._closed):
+        tcpDebugClient.sendall(msg)
 
-# signal.signal(signal.SIGTERM, _stop_handler)
-# signal.signal(signal.SIGINT, _sleep_handler)
+def _main_():
+    # COM PORT
+    debugPrint(b"Opening Com")
+    serial_dev = os.getenv("HOST_DEV")
+    if serial_dev is None:
+        debugPrint(b'Port not found')
+        serial_dev="COM3" #COM3 testing windows
 
-sensors = {}
-class SerialThread(threading.Thread):
-    def __init__(self):
-        super(SerialThread, self).__init__()
-        self.name = "SerialThread"
-        self.setDaemon(True)
-        self.stop_event = threading.Event()
+    serialPort = serial.Serial(port=serial_dev, baudrate=921600) 
+    serialPort.bytesize = serial.EIGHTBITS # number of bits per bytes
+    serialPort.parity = serial.PARITY_NONE # set parity check: no parity
+    serialPort.stopbits = serial.STOPBITS_ONE # number of stop bits
+    serialPort.timeout = 5
 
-    def stop(self):
-        self.stop_event.set()
+    while True:
+        while serialPort.inWaiting() > 0:
+            packet = serialPort.readline()
+            tcpMainClient.sendall(packet)
+    debugPrint(b"Not waiting for serial port; close.")
+    serialPort.close()
 
-    def run(self):
-        serial_dev = os.getenv("HOST_DEV1")
-        if serial_dev is None:
-            serial_dev="/dev/ttyS1"
+# Start
+tcpMainClient = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+tcpMainClient.connect((HOST, IQ_PORT))
 
-        sdev = serial.Serial(port=serial_dev, baudrate=921600) 
-        sdev.bytesize = serial.EIGHTBITS #number of bits per bytes
-        sdev.parity = serial.PARITY_NONE #set parity check: no parity
-        sdev.stopbits = serial.STOPBITS_ONE #number of stop bits
-        sdev.timeout = 5
+tcpDebugClient = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+tcpDebugClient.connect((HOST, DEBUG_PORT))
 
-        while True:
-            if self.stop_event.is_set():
-                break
-            while sdev.inWaiting() > 0:
-                sensVal = sdev.readline()
-                # write to 25888
-                time.sleep(1)
-        sdev.close()
-
-try:
-    p = SerialThread()
-    p.start()
-except:
-    print("error")
+debugPrint(b"New Connection!")
+_main_()

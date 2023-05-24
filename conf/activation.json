@@ -1,0 +1,12 @@
+{
+  "resources": {
+    "devices": [
+      {
+        "type": "serial",
+        "alias": "usb",
+        "label": "HOST_DEV",
+        "usage": "Serial device of USB port of AP"
+      }
+    ]
+  }
+}

@@ -1,33 +1,31 @@
-descriptor-schema-version: "2.0"
- 
+descriptor-schema-version: "2.10"
+
 info:
-  name: PySBOT
-  description: "Writes collected sensor data to log files"
-  version: "1.5"
-  author-link: "http://www.cisco.com"
-  author-name: "Cisco Systems"
+  name: "portposter"
+  description: "forwards COM port data to 177"
+  version: "1.0"
+  author-link: "http://www.airistaflow.com"
+  author-name: "Airista"
  
 app:
-  # Indicate app type (vm, paas, lxc etc.,)
-  type: paas
+ # Refer Platform Support Matrix table.
+ # armv7l for 32 bit CPU Architecture.
+ # aarch64 for 64 bit CPU Architecture.
+  cpuarch: armv71
+  type: docker
  
   resources:
-    profile: small
-
-    network:
-      - 
-        interface-name: eth0
-        ports: 
-            tcp: [6000]
+    profile: c1.small
     devices:
+    - type: serial
+      alias: usb
+      label: HOST_DEV
+      usage: Serial device of USB port of AP
+    network:
       -
-        type: serial
-        label: HOST_DEV1
-        usage: This is monitoring sensors 
+        interface-name: eth0
 
   # Specify runtime and startup
   startup:
-    runtime: python 
-    runtime-version: 2.7.3
-    target: main.py
-
+    rootfs: rootfs.img
+    target: /usr/bin/main 1>/dev/null 2>/dev/null
